@@ -1,0 +1,4 @@
+interface:
+  display_name: "JP Light Novel Translate"
+  short_description: "Translate Japanese light novels with stable voices."
+  default_prompt: "Use $jp-light-novel-translate to translate this Japanese light novel chapter into polished Simplified Chinese."
