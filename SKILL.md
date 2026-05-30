@@ -1,204 +1,203 @@
 ---
-name: jp-light-novel-translate
-description: Specialized Japanese light novel and Syosetu/Web novel translation workflow from Japanese to Simplified Chinese. Use when translating Japanese fiction chapters, web novels, light novels, manga-adjacent prose, character dialogue, honorific-heavy scenes, isekai/fantasy/romcom/battle academy/R18-adjacent novel text, or when the user asks for 日轻翻译, 轻小说精翻, Web小说翻译, Syosetu翻译, 角色语气一致, 术语表/glossary, 多章连载翻译, or publication-quality Chinese novel localization.
+name: jp-ln-to-zhcn-literary-translation
+description: Translate Japanese light novel chapters, folders, or full volumes into idiomatic Simplified Chinese with full-context pre-reading, project memory assets, glossary management, character-voice preservation, literary editing, and cross-volume QA. Use for end-to-end narrative translation, revision, polishing, terminology unification, or continuity review. Do not use for isolated dictionary lookups, technical documents, or interlinear glosses.
 ---
 
-# JP Light Novel Translate
+# Japanese Light Novel to zh-CN Literary Translation Skill
 
-Translate Japanese light novels into polished Simplified Chinese with high priority on accuracy, character voice, reading rhythm, and cross-chapter consistency. Treat this as faithful human translation with a controlled memory system, not sentence-by-sentence machine translation.
+## Goal
+Produce high-quality Simplified Chinese translations of Japanese light novels and Syosetu/Web novels. The translation must read like publishable Chinese fiction while preserving plot facts, tone, pacing, character voice, humor, subtext, relationship distance, and cross-chapter continuity.
 
-## Quality Target
+This skill is not a sentence-by-sentence machine translation recipe. Treat translation as four layers: system/project constraints, this workflow, persistent project assets, and release QA.
 
-Aim for "正版轻小说中文译稿初校后质量": faithful events and facts, natural Chinese prose, distinct character voices, stable terminology, minimal translationese, and no unauthorized plot embellishment.
+## Use This Skill
+Use this skill when:
 
-Do not promise perfect translation. For top quality, require a glossary/character memory and iterative review for long works.
+- the user provides a chapter, chapter folder, EPUB/TXT/Markdown source, whole volume, or long narrative file
+- the task is end-to-end translation, 续翻, revision, polishing, glossary building, style-guide creation, or continuity QA
+- the task requires chapter-level or volume-level context
+- the user asks for 日轻翻译, 轻小说精翻, Web小说翻译, Syosetu翻译, 汉化, 角色语气一致, 术语表, or publication-quality Chinese localization
 
-## Execution Model
+Do not use this skill when:
 
-This skill is for Codex to perform the translation work directly, guided by source text, project memory, and review passes. Bundled scripts may be used only for deterministic file operations such as chunking and EPUB/project assembly.
+- the user only wants a dictionary definition
+- the user wants a literal crib, line-by-line gloss, or grammar explanation
+- the source is not narrative prose
 
-If a whole book is too large to finish in one turn, work incrementally: translate chapters in order, save each completed chapter, rebuild the EPUB with completed chapters, and record progress. Do not generate fake completion or low-quality automated filler.
+## Required Project Assets
+Before translating a project, look for `meta/` near the source. If assets do not exist and the task is longer than a short excerpt, create or update:
 
-## Operating Modes
+- `meta/series_bible.md`
+- `meta/style_guide.zh-CN.md`
+- `meta/glossary.csv`
+- `meta/continuity_notes.md`
+- `meta/open_issues.md`
 
-- `quick`: Translate directly. Use only for short snippets, examples, or rough comprehension.
-- `normal`: Analyze context, update memory, translate, and self-check. Use by default for ordinary chapters.
-- `refined`: Analyze, translate, critique, revise, polish, and produce notes. Use for important chapters, public release, or when the user says 精翻, 顶级质量, 出版级, or 完美.
+Use bundled references when creating or updating them:
 
-If the user does not specify a mode, choose `refined` for fiction longer than 1,500 Japanese characters and `normal` for shorter text.
+- `references/memory-template.md` for project asset templates
+- `references/style-guide-template.md` for `style_guide.zh-CN.md`
+- `references/glossary-template.csv` for `glossary.csv`
+- `references/default-glossary.md` for fallback high-risk terms and genre terms
+- `references/voice-and-style.md` for character voice, honorifics, jokes, culture-loaded terms, and prose style
+- `references/quality-rubric.md` for MQM-style review and release gates
+- `references/refinement-prompts.md` for focused review passes
 
-## Required Context Handling
+Project assets override bundled defaults. If project decisions conflict with defaults, obey the project files and update the relevant note when the change is intentional.
 
-Before translating a work or chapter, look for these files near the source, then in the project root:
+## Core Workflow
 
-- `glossary.md`
-- `characters.md`
-- `style-guide.md`
-- `translation-memory.md`
+### 1. Intake
+1. Locate source files and sort them in canonical reading order.
+2. Detect source type: TXT, Markdown, EPUB-extracted text, DOCX-extracted text, or pasted chapter.
+3. Preserve source paragraph order, dialogue boundaries, scene breaks, author notes, ruby/furigana meaning, and emphasis unless the user asks otherwise.
+4. Remove web/forum noise only when it is clearly not part of the work: UI text, ratings, reply metadata, signatures, duplicated navigation, and scraped comments.
 
-If they exist, read them first and follow them. If they do not exist, infer a lightweight memory during translation and suggest saving one after the result. Do not block the user unless consistency across many chapters is explicitly required.
+### 2. Full-Context Reading
+1. Read the entire volume if feasible.
+2. If the volume is too large, read all chapter titles, the beginning and ending of each chapter, existing summaries, and all `meta/` assets.
+3. Build an internal map of characters, relationships, naming/address conventions, POV, recurring phrases, catchphrases, jokes, motifs, world-building terms, unresolved ambiguities, foreshadowing, and delayed reveals.
 
-Use the templates in:
+### 3. Chunking
+Chunk by scene or natural discourse boundary, not by arbitrary token count.
 
-- `references/memory-template.md` when creating or updating memory files.
-- `references/voice-and-style.md` when analyzing dialogue, honorifics, narration, comedy, innuendo, or R18-adjacent scenes.
-- `references/quality-rubric.md` for refined-mode critique and final checks.
-- `references/default-glossary.md` for built-in JP -> ZH light novel terms when no project glossary overrides them.
+Preferred chunk units:
 
-## Bundled Long-Form Tools
+- one short scene
+- one dialogue exchange cluster
+- one coherent introspection segment
 
-For long Markdown chapters, use the bundled chunker before translation when the file is too large to translate safely in one pass:
+Avoid splitting punchlines, confessions, action beats and consequences, setup/payoff pairs, or honorific/register-sensitive exchanges.
+
+Maintain a rolling context packet for each chunk: previous chunk summary, current chapter summary, relevant glossary entries, voice notes for active speakers, and unresolved issues.
+
+For long Markdown chapters, the bundled chunker may be used only for deterministic splitting; translation still follows scene-aware review:
 
 ```bash
-npx -y bun C:\Users\adm\.codex\skills\jp-light-novel-translate\scripts\main.ts chapter.md --max-words 3500 --output-dir chapter-zh-CN
+npx -y bun C:\Users\adm\.codex\skills\jp-ln-to-zhcn-literary-translation\scripts\main.ts chapter.md --max-words 3500 --output-dir chapter-zh-CN
 ```
 
-The chunker preserves Markdown block boundaries and writes `chunks/chunk-NN.md` files. Translate chunks in order using the same analysis, glossary, and character memory, then merge them before refined review.
+### 4. Translation Pass
+For each chunk:
 
-## Workflow
+1. Determine speaker, addressee, emotional direction, register, and relationship distance.
+2. Identify risky items: honorifics, first-person pronouns, sentence endings, culture-specific terms, onomatopoeia/mimetics, puns, jokes, ellipsis, omitted subjects, ambiguous pronouns, and high-risk calques.
+3. Draft the translation in natural zh-CN.
+4. Rewrite the draft for rhythm, readability, and character voice.
+5. Verify consistency against project assets.
+6. Save the final chunk into the chapter output when doing file-based work.
 
-### 1. Source Preparation
+### 5. Chapter-Level Review
+After every chapter:
 
-Preserve paragraph order, dialogue boundaries, scene breaks, ruby/furigana hints, emphasis, and author notes unless the user asks otherwise.
+1. Re-read the chapter as Chinese prose only.
+2. Remove translationese and awkward carryover from Japanese syntax.
+3. Check names, forms of address, tense/aspect interpretation, restored omitted subjects, paragraphing, dialogue punctuation, repeated terms, repeated metaphors, and voice drift.
+4. Update `meta/glossary.csv`, `meta/series_bible.md`, `meta/continuity_notes.md`, and `meta/open_issues.md`.
+5. Create `qa/<chapter>.qa.md` when doing file-based work.
 
-For long chapters, split by scene or paragraph groups, not by arbitrary token count. Keep the previous and next scene summaries available while translating each chunk.
+### 6. Volume-Level Review
+After the volume is complete:
 
-If the source is a Markdown file and needs chunking, prefer `scripts/main.ts` with `--max-words 3500`. If a scene break is obvious, keep scenes together even when a chunk could be smaller.
+1. Run a cross-chapter consistency pass.
+2. Compare first appearances and later uses of character names, nicknames, kinship terms, address forms, school/job labels, recurring jokes, recurring emotional metaphors, and world-building terms.
+3. Produce `qa/volume_consistency_report.md`.
+4. Treat open issues as unfinished work unless they are low-risk and explicitly recorded.
 
-For multi-chapter projects, maintain these invariants:
+## Hard Translation Rules
 
-- Names, titles, abilities, organizations, locations, and item names must not drift.
-- Character speech habits must remain stable unless the plot changes them.
-- Important foreshadowing, ambiguity, and unreliable narration must stay ambiguous.
+### Natural Chinese First
+When Japanese and Chinese differ structurally, choose the most natural Chinese expression that preserves the original function. Do not preserve Japanese syntax at the expense of Chinese readability.
 
-### 2. Analysis
+Allowed transformations include reordering, splitting, merging, replacing an idiom with a Chinese equivalent, and lightly embedding necessary cultural context. These are allowed only when they preserve facts, ambiguity, tone, and scene function.
 
-For `normal` and `refined`, identify:
-
-- Genre and register: isekai, romcom, fantasy, school, battle, slice of life, suspense, adult, parody.
-- Narrative POV: first person, third person, inner monologue, unreliable narrator.
-- Character voices: age, social role, politeness,口癖, emotional baseline, relationship distance.
-- Translation risks: honorifics, jokes, puns, idioms, dialect, otaku terms, erotic euphemisms, game UI terms, magic/system terms.
-- New glossary candidates.
-
-Keep this analysis concise unless the user asks to see it.
-
-Load `references/default-glossary.md` during analysis and merge it after the user's project glossary. Project glossary choices always win.
-
-### Localization / 汉化 Rules
-
-Use localization to preserve the original reading experience, not to rewrite the work.
-
-- Build and obey two memories: `glossary.md` for fixed names/terms/catchphrases, and `style-guide.md` for prose rhythm, dialogue distance, genre feel, and punctuation choices.
-- Translate idioms, metaphors, jokes, and stock phrases by function and tone. Use natural Chinese equivalents when they carry the same scene effect; keep Japanese cultural texture when the setting, relationship, or later plot depends on it.
-- Treat honorifics, first-person pronouns, and sentence endings as relationship data. Encode them through Chinese address forms, directness, sentence length, and politeness level; do not simply keep or delete every suffix.
-- Preserve ambiguity, foreshadowing, unreliable narration, and delayed reveals. Natural Chinese must not resolve what the Japanese intentionally leaves open.
-- Use translator notes sparingly. Prefer translating the meaning in-body; add notes only for unavoidable wordplay, culturally necessary context, or a term whose surface form matters later.
-- Do a separate editor pass after drafting: fix grammar, repeated calques, inconsistent terms, voice drift, paragraph rhythm, and formatting. A readable first draft is not the final translation.
-### 3. Translation Rules
-
-Translate meaning, intent, and reading experience. Avoid Japanese word order in Chinese.
-
-Objectivity and fidelity:
-
-- Do not add information, explanations, emotions, motivations, scene details, or foreshadowing that are not present in the source.
-- Do not intensify or soften a character's emotion beyond the source wording.
-- Do not replace ambiguity with interpretation. Preserve uncertainty, hesitation, and omissions.
-- Do not add translator commentary inside the 正文 unless the user explicitly asks for notes.
-- Natural Chinese is required, but naturalness must serve accuracy, not rewrite the scene.
-
-Dialogue:
-
-- Make each speaker sound like a specific person.
-- Preserve politeness level and relationship distance through Chinese wording, not mechanical suffixes.
-- Keep catchphrases recognizable but not awkward.
-- Do not flatten tsundere, shy, arrogant, childish, formal, archaic, or deadpan voices into the same neutral tone.
-
-Narration:
-
-- Use natural Chinese novel prose.
-- Keep light novel pacing: short punchy sentences can stay punchy; emotional beats should breathe.
+### Accuracy Before Polish
+- Do not add information, motivations, scene details, foreshadowing, or emotional intensity not present in the source.
+- Do not delete small jokes, hesitations, relationship cues, or ambiguity because they are inconvenient.
+- Do not resolve delayed reveals or unreliable narration early.
 - Do not over-literarize simple Syosetu prose.
-- Prefer clean, direct Chinese light-novel rhythm over visibly translated phrasing. Use culturally natural Chinese wording when it preserves the source facts and scene meaning.
-- Remove forum noise, website UI text, comments, ratings, signatures, and reply metadata when source material is copied from forums or web pages.
 
-Honorifics:
+### Honorifics and Address Forms
+Honorifics are not ornaments. Convert them into Chinese social meaning: distance, politeness, respect, intimacy, hierarchy, and emotional shift.
 
-- Translate flexibly. Use "前辈", "老师", "同学", "小姐", "大人", name-only, or omitted forms based on relationship and scene.
-- Preserve Japanese suffixes only when the work's style or fandom convention clearly benefits from it.
-- Explain unusual choices only in a short translator note.
+Do not mechanically keep or delete every suffix. Record stable address decisions in `meta/glossary.csv` or `meta/series_bible.md`.
 
-Onomatopoeia and mimetics:
+### Onomatopoeia and Mimetics
+- If there is a natural Chinese sound-symbolic equivalent, use it.
+- If not, translate the effect, motion, mood, texture, or rhythm.
+- Never keep a Japanese mimetic merely because it looks vivid in the source.
+- Do not force a rare or childish Chinese sound word when action description reads better.
 
-- Render by effect, not spelling. Use natural Chinese sound words, action description, or rhythm depending on the scene.
-- Do not leave long strings like "咚咚咚咚" unless the visual rhythm matters.
+### Puns and Humor
+Use this priority order: preserve plot function, preserve character reaction and comedic timing, preserve humorous effect, then preserve formal verbal mechanism if possible.
 
-Terms and names:
+If full preservation is impossible, prefer creative Chinese rewriting over dead literalism. Add a note only when the wordplay itself is necessary and cannot be carried in the text.
 
-- Use existing glossary first.
-- If no glossary exists, choose stable, readable Chinese names and record candidates.
-- Keep Japanese names in common Chinese transliteration unless the user prefers original kanji or romaji.
-- Preserve chosen name glyphs exactly. Do not substitute similar-looking variants or simplified forms for Japanese personal-name kanji when the project glossary fixes them.
+### Culture-Loaded Items
+Use a three-step decision:
 
-Sensitive or adult content:
+1. Is the term already readable for zh-CN light-novel readers?
+2. If not, does misunderstanding damage the scene?
+3. If yes, add very light in-line clarification.
 
-- Translate faithfully without moralizing, euphemizing into nonsense, or becoming gratuitously explicit.
-- Preserve consent cues, speaker intent, and power dynamics accurately.
+Avoid heavy notes unless the user explicitly wants annotation mode.
 
-### 4. Refined Mode
+### High-Risk Calques
+Do not let the following appear as lazy direct translations unless the scene truly demands them:
 
-Use this sequence:
+- `社会人`
+- `元气`
+- `违和感`
+- `接住` for abstract `受け止める`
+- `重要的事物`
+- `心情复杂地`
+- `温柔地笑了起来` when a simpler Chinese verb is more natural
+- `说不定`
+- `果然如此`
 
-1. Draft a faithful, readable translation.
-2. Critique the draft against `references/quality-rubric.md`.
-3. Revise concrete problems: mistranslation, unauthorized additions, voice drift, stiff Chinese, lost jokes, inconsistent terms, rhythm issues.
-4. Polish only after accuracy is fixed.
-5. Provide final text first. Add concise notes only when useful.
+For high-risk term handling, read `references/default-glossary.md` and apply context-specific choices instead of fixed one-to-one replacements.
 
-In critique, do not praise. List actionable defects and fix them.
+## Modes
+- `quick`: short excerpt or rough comprehension only.
+- `normal`: analyze context, translate, update memory, and self-check.
+- `refined`: draft, critique, revise, Chinese-only readthrough, continuity check, and QA notes. Use for public release, full chapters, or when the user says 精翻, 顶级质量, 出版级, 完美, or 汉化.
+
+If the user does not specify a mode, use `refined` for fiction longer than 1,500 Japanese characters and `normal` for shorter narrative text.
+
+## Quality Gates
+Use MQM-style review for literary translation. A chapter is not ready if it has unresolved critical or major errors in accuracy, fluency, character voice/register, terminology/continuity, humor/cultural transfer, or rhythm/readability.
+
+For release QA, target:
+
+- name/place consistency: 100%
+- glossary consistency: at least 98%, allowing documented context-variable entries
+- high-risk banned calque hits: 0
+- major address-form drift: 0
+- major relationship-line conflicts: 0
+- Chinese punctuation and dialogue quote issues: near zero
+
+Automatic scores, if available, are alarms rather than final judgment. Human-style MQM review and Chinese-only readthrough decide literary quality.
 
 ## Learning From Each Translation
+When the user corrects a translation or a recurring problem appears:
 
-When the user corrects the translation process or a recurring issue appears, update the relevant project memory files and, when broadly reusable, this skill:
+- add term decisions to `meta/glossary.csv` or `references/default-glossary.md`
+- add voice decisions to `meta/series_bible.md`
+- add style/process corrections to `meta/style_guide.zh-CN.md` or this skill when broadly reusable
+- add unresolved choices to `meta/open_issues.md`
 
-- Add term decisions to `glossary.md` or `references/default-glossary.md`.
-- Add character voice decisions to `characters.md`.
-- Add style/process corrections to `style-guide.md` or this SKILL.md.
-- Add unresolved choices to `translation-memory.md`.
+Keep updates operational. Do not add general advice that does not change future behavior.
 
-Keep updates concise and operational. Do not add general advice that does not change future translation behavior.
+## Output Contract
+For ordinary requests, output the polished Chinese translation first.
 
-### 5. Output
+For file-based work, save outputs when feasible:
 
-For ordinary requests, output only the translated Chinese text.
+- `translations/<chapter>.zh-CN.md`
+- `qa/<chapter>.qa.md`
+- updated `meta/` assets
 
-For file-based or long-chapter work, save outputs beside the source when feasible:
-
-- `translation.md`: final translation
-- `translation-notes.md`: glossary updates, unresolved choices, optional translator notes
-
-If the user asks for a reusable project workflow, create or update:
-
-- `glossary.md`
-- `characters.md`
-- `style-guide.md`
-- `translation-memory.md`
-
-End with a short status summary including mode, files touched, and any unresolved glossary choices.
+Unless the user asks for translation only, include a short status note listing new glossary entries, unresolved ambiguities, and high-risk continuity issues. If the user asks for only the translation, output only the final polished translation.
 
 ## Stop Conditions
-
-Stop once the translation or requested setup is complete and validation/review has enough evidence. Do not keep expanding the workflow, adding unrelated tools, or rewriting the skill unless the user asks.
-
-## Long-Form Final Polish Lessons
-
-For full-book Japanese light novel polishing after translation, run an editorial pass after accuracy review. The goal is not rewriting the story, but removing AI/translation texture while preserving facts, ambiguity, and character intent.
-
-- Repetition control: audit high-frequency filler such as "胸口深处", "稍微", "像是", "不由得", "视线", "轻轻", "某种", and repeated sentence frames. Replace only where the sentence remains faithful; do not vary fixed terms or emotional anchors mechanically.
-- Chinese prose rhythm: shorten over-explained sentences, reduce duplicated emotional predicates, and prefer direct Chinese phrasing when Japanese connective structure leaks into the translation.
-- Dialogue naturalness: make spoken lines sound like the speaker would say them in Chinese. Keep grief, hesitation, and politeness, but remove stiff calques such as overusing "这样说着", "那样的", or formal connective phrasing in casual speech.
-- Emotional density: for grief-heavy works, do not intensify beyond the source. When several adjacent sentences repeat the same pain image, keep the strongest one and make the others quieter or more concrete.
-- Character boundaries: when a plot intentionally blurs identities or memories, preserve the confusion but keep names and pronouns exact. Do not explain the trick before the source does.
-- Contextual term rendering: do not translate `社会人` literally as "社会人" in Chinese prose. Choose by context: "上班族", "职场人", "成年人", "工作以后的人", "出来工作的人", or rewrite the sentence naturally when the point is maturity, preparedness, or adult responsibility.
-- Contextual emotion verbs: do not mechanically translate `受け止める` as "接住" unless a physical catching image is intended. For emotional or conversational use, choose by context: "承受", "包容", "听进去", "认真听完", "消化", "面对", "分担", "陪你一起扛", etc. Preserve the emotional function instead of the dictionary surface.
-- Final EPUB QA: check chapter count, title duplication, banned glyphs/noise, name glyph stability, and EPUB structure after rebuilding. Treat clean mechanical checks as necessary but not sufficient; still sample key emotional chapters by eye.
+Stop once the requested translation, revision, setup, or QA pass is complete and validation has enough evidence. Do not expand into unrelated tooling or rewrite the skill again unless requested.

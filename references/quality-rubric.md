@@ -1,67 +1,48 @@
-﻿# Refined Translation Quality Rubric
+# Quality Rubric
 
-Use this checklist before finalizing refined-mode translations.
+Use this for refined-mode critique, chapter QA, volume QA, and regression checks.
 
-## Accuracy
+## MQM-Style Dimensions
 
-- No omitted actions, negations, subjects, numbers, names, or relationship cues.
-- No added information, explanation, motivation, emotional intensity, or scene detail that is not present in the source.
-- Ambiguous source remains ambiguous when intentional.
-- Foreshadowing and repeated motifs are preserved.
-- Jokes, insults, threats, confessions, and refusals keep their function.
+| Dimension | Weight | Check | Typical Errors |
+|---|---:|---|---|
+| Accuracy | 30 | facts, causality, pronouns, relationships, foreshadowing | omission, mistranslation, reversal, wrong restored subject |
+| Fluency | 20 | whether Chinese reads smoothly and like fiction | stiff syntax, Japanese order, dead literalism |
+| Character Voice and Register | 15 | distinct speakers, politeness, age, distance | same voice for all, flattened honorifics, register mismatch |
+| Terminology and Continuity | 15 | names, address forms, world terms, catchphrases | drift, duplicate translations, unstable labels |
+| Humor, Puns, Cultural Transfer | 10 | joke function, cultural handling | dead puns, lost reaction, over-explaining |
+| Rhythm and Readability | 10 | pacing, paragraph movement, emotional arc | wooden rhythm, flattened confession, weak turn |
 
-## Objectivity
+## Score Bands
+- 90+: ready for light human proofreading.
+- 80-89: strong but needs style unification.
+- 70-79: needs focused repair.
+- below 70: retranslate problem chapters instead of patching locally.
 
-- The translation does not interpret a character's motive unless the source states it.
-- The translation does not make implicit emotional states more explicit for drama.
-- The translation does not add connective logic such as "therefore", "because", or "in fact" when the source only juxtaposes images or feelings.
-- Chinese smoothing is limited to grammar, rhythm, and readability; it must not change the amount of information.
+## Release Gates
 
-## Character Voice
+| Gate | Target | Note |
+|---|---:|---|
+| name/place consistency | 100% | Drift is high impact. |
+| glossary consistency | >= 98% | Allows documented context-variable entries. |
+| high-risk banned calque hits | 0 | Examples: 社会人, abstract 接住, 违和感. |
+| dropped sentence/paragraph risk | <= 0.3% | Check by paragraph or scene alignment. |
+| quote/punctuation standard | >= 99% | Use Chinese publishing-style punctuation. |
+| high-risk address drift | 0 major | 学长/前辈/老师/name-only etc. |
+| catchphrase drift | 0 major | Series readers notice this. |
+| relationship-line conflict | 0 major | Especially romance, family, hierarchy. |
 
-- Each major speaker remains distinguishable.
-- Politeness level and emotional state match the scene.
-- Catchphrases are consistent but not mechanically repeated.
-- Inner monologue sounds like the narrator, not a neutral summary.
+## Review Layers
+1. Smoke test: validate files, encoding, chapter count, and obvious banned terms.
+2. Chapter test: inspect one dialogue-dense passage and one narration/introspection passage.
+3. Volume consistency test: compare terms, names, address forms, jokes, and emotional motifs.
+4. Cross-volume regression: compare with previous volume glossary, series bible, continuity notes, and actual translations.
 
-## Chinese Readability
+## Human Editing Loop
+1. First-chapter style lock: translate 1,500-3,000 source characters or one chapter sample and record style decisions.
+2. Chapter-level fact audit: check speaker, pronoun chain, chronology, causality, omission, and over-translation.
+3. Literary polish: remove translationese without changing facts.
+4. Chinese-only readthrough: read as a Chinese novel without source beside it.
+5. Cross-volume regression: confirm old names, jokes, address forms, and setting terms still hold.
 
-- Reads like natural Simplified Chinese fiction.
-- No stiff literal patterns from Japanese.
-- Sentence rhythm supports the scene: fast for action/comedy, slower for intimacy or tension.
-- Paragraphing and punctuation are easy to read.
-
-## Terminology
-
-- Glossary terms are applied exactly.
-- New names and terms are recorded in notes when relevant.
-- Magic/system/game terms stay compact and reusable.
-- Titles and honorifics are handled consistently.
-
-## Style Fit
-
-- Does not over-polish Syosetu-style simple prose into heavy literature.
-- Does not flatten emotional or comedic beats.
-- Does not add lore explanations inside the translation.
-- Translator notes are rare, short, and only for real comprehension needs.
-
-## Final Pass
-
-For every revised chapter, check:
-
-1. Does any line sound like generic AI prose?
-2. Did any character's voice drift?
-3. Did any Japanese grammar leak into Chinese?
-4. Did any term translation change mid-chapter?
-5. Are there unresolved choices the user should know about?
-
-## Localization QA
-
-During refined review, check:
-
-- No dictionary-looking leftovers where natural Chinese is expected.
-- Honorifics and pronouns still preserve relationship distance after localization.
-- Idioms, jokes, and metaphors keep the original scene function.
-- Translator notes are absent from正文 unless they are genuinely necessary.
-- Glossary terms, name glyphs, catchphrases, and style memory choices remain stable across chapters.
-- Dialogue lines can be spoken aloud without sounding like translated Japanese syntax.
+Automatic metrics such as DocCOMET or XCOMET may be used as alarms when available, but never as the final judge of literary quality.

@@ -1,59 +1,55 @@
-﻿# Default JP -> ZH Light Novel Glossary
+# Default JP -> zh-CN Light Novel Glossary
 
-Use these as fallback defaults. Project `glossary.md` always overrides them.
+Use this as fallback only. Project `meta/glossary.csv` always overrides it.
+
+## Rule
+Do not turn this file into one-to-one dictionary replacement. Many entries are context-variable. Choose the rendering that preserves scene function, relationship distance, and natural Chinese.
+
+## High-Risk Calques
+
+| Japanese | Avoid | Prefer / Decide By Context | Note |
+|---|---|---|---|
+| 社会人 | 社会人 | 职场人 / 参加工作的人 / 上班族 / 社会人士 / 成年人 | Means a person already in society or work, often contrasted with students. Do not use the Japanese-looking Chinese calque unless discussing the term itself. |
+| 社会人一年生 | 社会人第一年 / 社会人一年级 | 刚参加工作的新人 / 刚步入社会的新人 / 职场新人 | Rewrite into natural Chinese. |
+| 受け止める | 接住 for abstract use | 接受 / 听进 / 理解 / 承受 / 认真看待 / 正面回应 / 陪你一起扛 | Use 接住 only for physical catching or when the metaphor is intentionally physical. |
+| 大丈夫 | fixed 没关系 | 没事吧 / 我没事 / 不用了 / 可以 / 放心吧 / 撑得住 | Decide whether the line is reassurance, refusal, confirmation, or pretending to be fine. |
+| 元気 | 元气 by default | 精神 / 有精神 / 活力 / 身体还好 / 打起精神 | 元气 is acceptable only when fandom/register supports it. |
+| 違和感 | 违和感 by default | 不对劲 / 别扭 / 异样 / 不自然 / 说不上来的不协调 | Use natural Chinese unless the concept itself is being discussed. |
+| 仕方ない | fixed 没办法 | 没办法 / 也只能这样 / 算了 / 拿它没辙 | Match resignation, comfort, surrender, or irritation. |
+| 甘える | fixed 撒娇 | 撒娇 / 依赖 / 任性 / 借着亲近放松 / 麻烦别人 | Choose by relationship and emotional stance. |
+| 大切なもの | 重要的事物 | 重要的东西 / 珍视的东西 / 放不下的人或事 / 心里最要紧的东西 | Avoid stiff abstraction. |
+| 複雑な気持ち | 心情复杂地 | 心里五味杂陈 / 一时说不清 / 说不上是什么滋味 | Context decides whether to state or imply. |
 
 ## Honorifics and Address
 
-| Japanese | Default Chinese | Note |
+| Japanese | Default Handling | Note |
 |---|---|---|
-| さん | 按关系译为姓名直呼、同学、小姐、先生等 | 不机械保留；看关系距离、礼貌层级和场景。 |
-| くん | 按语境译为同学、君、直呼或省略 | 男性后辈/同辈、亲近关系或上位者称呼时分别处理。 |
-| ちゃん | 按语境译为小、酱、直呼或省略 | 可爱、亲昵、轻佻或讽刺意味要保留。 |
-| 様 | 大人 | 贵族、神明、魔王、上位者语境优先；正式政治场景可用“阁下”。 |
-| 先輩 | 前辈 | 校园、社团、职场层级明显时保留。 |
-| 先生 | 老师 | 教师、医生、作家等按身份可调整。 |
-| お兄ちゃん | 哥哥 | 妹妹系撒娇语气可按用户偏好保留“欧尼酱”，默认自然中文。 |
-| お姉ちゃん | 姐姐 | 同上，按关系和语气处理。 |
+| さん | name-only / 同学 / 先生 / 小姐 / omitted | Encode politeness and distance through Chinese address. Do not default to 桑. |
+| くん | name-only / 同学 / 君 / omitted | Consider age, hierarchy, intimacy, and teasing. |
+| ちゃん | 小 + name / name-only / omitted | Keep cuteness, intimacy, condescension, or teasing when present. |
+| 様 | 大人 / 阁下 / name + title | Choose by fantasy, political, religious, or formal context. |
+| 先輩 | 学长 / 学姐 / 前辈 | Do not use 先辈. Decide by school/work setting and speaker habits. |
+| 先生 | 老师 / 医生 / 先生 | Decide by profession and role. |
+| お兄ちゃん | 哥哥 | Keep special fandom forms only if the project style explicitly wants them. |
+| お姉ちゃん | 姐姐 | Same as above. |
 
 ## Genre Terms
 
 | Japanese | Default Chinese | Note |
 |---|---|---|
-| 勇者 | 勇者 | 不默认译作“英雄”，除非作品设定明确。 |
+| 勇者 | 勇者 | Do not default to 英雄 unless the setting says so. |
 | 魔王 | 魔王 |  |
 | 聖女 | 圣女 |  |
 | 冒険者 | 冒险者 |  |
 | ギルド | 公会 |  |
-| ステータス | 状态面板 | 游戏系统界面语境；普通状态可译为“状态”。 |
-| スキル | 技能 | 系统能力名统一用“技能”。 |
+| ステータス | 状态面板 / 状态 | Game UI vs ordinary condition. |
+| スキル | 技能 | Keep stable in system settings. |
 | レベル | 等级 |  |
-| ダンジョン | 迷宫 | 现代游戏语境可用“地下城”；同一作品内固定。 |
+| ダンジョン | 迷宫 / 地下城 | Pick one per project. |
 | 異世界 | 异世界 |  |
 | 転生 | 转生 |  |
 | 転移 | 转移 |  |
-| 悪役令嬢 | 反派千金 | 女性向/乙女游戏题材常用。 |
+| 悪役令嬢 | 反派千金 | Otome/villainess genre default. |
 | 幼馴染 | 青梅竹马 |  |
 | ラブコメ | 恋爱喜剧 |  |
-| ざまぁ | 打脸爽文 | 正文中按具体剧情翻译，不要生硬插入术语。 |
-
-## Voice Markers
-
-| Japanese | Default Handling | Note |
-|---|---|---|
-| 僕 | 我 | 通过语气体现少年、温和或克制，不硬译称谓。 |
-| 俺 | 我 | 通过更直接、粗粝或自信的中文语气体现。 |
-| 私 | 我 | 根据角色性别、身份和礼貌层级处理。 |
-| 妾 | 妾身 | 仅在古风、魔王、神明、贵族角色需要古雅口吻时使用。 |
-| ござる | 轻微古风或武士腔 | 不要每句硬塞固定词尾。 |
-| なのです | 可爱、认真或稚气的句尾节奏 | 避免机械译成“的是”。 |
-| ツンデレ | 傲娇 | 正文按行为和语气处理。 |
-
-## Contextual Social Terms
-
-| Japanese | Default Chinese | Note |
-|---|---|---|
-| 社会人 | 上班族 / 职场人 / 成年人 / 出来工作的人 | 不直译为“社会人”。按语境判断是就业身份、成熟感、社会责任，还是“有工作经验的人”。 |
-| 受け止める | 承受 / 包容 / 听进去 / 消化 / 分担 / 陪你一起扛 | 情绪、倾听、包容语境不机械译为“接住”；只有物理接球/接物时才用“接住”。 |
-| 甘える | 撒娇 / 依赖 / 任性 / 借着亲近放松 | 按关系和情绪处理，避免固定译成“撒娇”。 |
-| 仕方ない | 没办法 / 也只能这样 / 算了 | 按无奈、放弃、安慰、让步分别处理。 |
-| 大丈夫 | 没事 / 可以 / 放心 / 撑得住 | 按回答对象和场景，不固定译成“没问题”。 |
+| ざまぁ | 打脸爽文 | Do not force the meta term into prose. |
