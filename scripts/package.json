@@ -1,7 +1,0 @@
-{
-  "name": "jp-ln-to-zhcn-literary-translation-chunk",
-  "private": true,
-  "dependencies": {
-    "markdown-it": "14.1.1"
-  }
-}

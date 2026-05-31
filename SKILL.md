@@ -1,203 +1,184 @@
 ---
 name: jp-ln-to-zhcn-literary-translation
-description: Translate Japanese light novel chapters, folders, or full volumes into idiomatic Simplified Chinese with full-context pre-reading, project memory assets, glossary management, character-voice preservation, literary editing, and cross-volume QA. Use for end-to-end narrative translation, revision, polishing, terminology unification, or continuity review. Do not use for isolated dictionary lookups, technical documents, or interlinear glosses.
+description: translate japanese light novel chapters, folders, web-novel exports, or full volumes into idiomatic simplified chinese with project memory, glossary, character voice control, anti-translationese editing, batch workflow, and release qa. use for japanese-to-zh-cn literary translation, polishing, retranslation, continuity review, codex or antigravity workspace translation projects, and high-quality light novel localization. do not use for isolated dictionary lookups, technical documents, or interlinear grammar glosses.
 ---
 
-# Japanese Light Novel to zh-CN Literary Translation Skill
+# 日文轻小说 → 简体中文精翻 Skill
 
-## Goal
-Produce high-quality Simplified Chinese translations of Japanese light novels and Syosetu/Web novels. The translation must read like publishable Chinese fiction while preserving plot facts, tone, pacing, character voice, humor, subtext, relationship distance, and cross-chapter continuity.
+## 目标
+把日文轻小说、Web 小说、Syosetu 文本、EPUB/TXT/Markdown 抽取稿翻成可直接阅读、可进入校对流程的简体中文小说。译文必须优先像中文小说，其次才像“忠实译文”：事实、人物关系、伏笔、称呼、语气、笑点、节奏都要保住，但不能残留日语语序和 GPT 腔。
 
-This skill is not a sentence-by-sentence machine translation recipe. Treat translation as four layers: system/project constraints, this workflow, persistent project assets, and release QA.
+这不是逐句机翻指令。执行时把自己当成“译者 + 中文编辑 + 连续性校对”，按项目资产和 QA 闭环工作。
 
-## Use This Skill
-Use this skill when:
+## 最高优先级
+1. **准确**：剧情事实、动作先后、指代、因果、伏笔、人物心理不得错。
+2. **自然**：译文必须像中文小说，避免日式直译、抽象名词堆叠、连接词模板化和 AI 平滑腔。
+3. **声音**：叙述者与角色要有年龄、身份、关系距离和情绪差异。
+4. **一致**：人名、称呼、专有名词、口头禅、反复句、情绪母题跨章统一。
+5. **可交付**：每章完成后有译文、术语/人设更新、QA 记录；整卷完成后有一致性报告。
 
-- the user provides a chapter, chapter folder, EPUB/TXT/Markdown source, whole volume, or long narrative file
-- the task is end-to-end translation, 续翻, revision, polishing, glossary building, style-guide creation, or continuity QA
-- the task requires chapter-level or volume-level context
-- the user asks for 日轻翻译, 轻小说精翻, Web小说翻译, Syosetu翻译, 汉化, 角色语气一致, 术语表, or publication-quality Chinese localization
+## 项目资产
+面对单章以上任务，先查找或创建项目资产。项目文件优先于本 Skill 默认规则。
 
-Do not use this skill when:
+必备目录：
 
-- the user only wants a dictionary definition
-- the user wants a literal crib, line-by-line gloss, or grammar explanation
-- the source is not narrative prose
+- `source/`：日文原文，可是 txt、md、epub 抽取文本。
+- `translations/`：简体中文译文。
+- `meta/`：项目记忆。
+- `qa/`：质检报告。
+- `work/`：分块、上下文包、中间稿，可不交付。
 
-## Required Project Assets
-Before translating a project, look for `meta/` near the source. If assets do not exist and the task is longer than a short excerpt, create or update:
+必备文件：
 
-- `meta/series_bible.md`
-- `meta/style_guide.zh-CN.md`
-- `meta/glossary.csv`
-- `meta/continuity_notes.md`
-- `meta/open_issues.md`
+- `meta/series_bible.md`：作品信息、角色、人际关系、时间线、反复句。
+- `meta/style_guide.zh-CN.md`：本项目中文文风、标点、称呼策略、禁用表达。
+- `meta/glossary.csv`：人名、称呼、术语、高风险词。
+- `meta/continuity_notes.md`：跨章连续性、关系变化、伏笔。
+- `meta/open_issues.md`：待确认问题。
 
-Use bundled references when creating or updating them:
-
-- `references/memory-template.md` for project asset templates
-- `references/style-guide-template.md` for `style_guide.zh-CN.md`
-- `references/glossary-template.csv` for `glossary.csv`
-- `references/default-glossary.md` for fallback high-risk terms and genre terms
-- `references/voice-and-style.md` for character voice, honorifics, jokes, culture-loaded terms, and prose style
-- `references/quality-rubric.md` for MQM-style review and release gates
-- `references/refinement-prompts.md` for focused review passes
-
-Project assets override bundled defaults. If project decisions conflict with defaults, obey the project files and update the relevant note when the change is intentional.
-
-## Core Workflow
-
-### 1. Intake
-1. Locate source files and sort them in canonical reading order.
-2. Detect source type: TXT, Markdown, EPUB-extracted text, DOCX-extracted text, or pasted chapter.
-3. Preserve source paragraph order, dialogue boundaries, scene breaks, author notes, ruby/furigana meaning, and emphasis unless the user asks otherwise.
-4. Remove web/forum noise only when it is clearly not part of the work: UI text, ratings, reply metadata, signatures, duplicated navigation, and scraped comments.
-
-### 2. Full-Context Reading
-1. Read the entire volume if feasible.
-2. If the volume is too large, read all chapter titles, the beginning and ending of each chapter, existing summaries, and all `meta/` assets.
-3. Build an internal map of characters, relationships, naming/address conventions, POV, recurring phrases, catchphrases, jokes, motifs, world-building terms, unresolved ambiguities, foreshadowing, and delayed reveals.
-
-### 3. Chunking
-Chunk by scene or natural discourse boundary, not by arbitrary token count.
-
-Preferred chunk units:
-
-- one short scene
-- one dialogue exchange cluster
-- one coherent introspection segment
-
-Avoid splitting punchlines, confessions, action beats and consequences, setup/payoff pairs, or honorific/register-sensitive exchanges.
-
-Maintain a rolling context packet for each chunk: previous chunk summary, current chapter summary, relevant glossary entries, voice notes for active speakers, and unresolved issues.
-
-For long Markdown chapters, the bundled chunker may be used only for deterministic splitting; translation still follows scene-aware review:
+可用脚本：
 
 ```bash
-npx -y bun C:\Users\adm\.codex\skills\jp-ln-to-zhcn-literary-translation\scripts\main.ts chapter.md --max-words 3500 --output-dir chapter-zh-CN
+python scripts/ln_project.py init --root . --source source
+python scripts/ln_project.py inventory --source source --output meta/source_inventory.json
+python scripts/ln_project.py context-pack --source source --meta meta --output meta/context_pack.md
+python scripts/ln_project.py chunk source/第01话.txt --output-dir work/chunks/第01话 --max-chars 4500
+python scripts/ln_project.py scan translations --output qa/high_risk_scan.md
+python scripts/ln_project.py manifest --source source --translations translations --output qa/translation_manifest.md
 ```
 
-### 4. Translation Pass
-For each chunk:
+脚本只做确定性准备和扫描，不替代翻译判断。
 
-1. Determine speaker, addressee, emotional direction, register, and relationship distance.
-2. Identify risky items: honorifics, first-person pronouns, sentence endings, culture-specific terms, onomatopoeia/mimetics, puns, jokes, ellipsis, omitted subjects, ambiguous pronouns, and high-risk calques.
-3. Draft the translation in natural zh-CN.
-4. Rewrite the draft for rhythm, readability, and character voice.
-5. Verify consistency against project assets.
-6. Save the final chunk into the chapter output when doing file-based work.
+## 整卷/整文件夹工作流
+用户给一整个文件夹或一卷时，不要直接从第一章逐段开翻。必须先做准备。
 
-### 5. Chapter-Level Review
-After every chapter:
+### 1. Intake：建立文件顺序
+1. 扫描 `source/`，只选小说正文文件，排除网页噪音、备份文件、旧译稿。
+2. 按章节编号、卷号、自然排序确定阅读顺序。
+3. 生成 `meta/source_inventory.json`，记录路径、大小、字符数、sha1、首行标题。
+4. 不确定顺序时，不擅自重排；在 `meta/open_issues.md` 记录。
 
-1. Re-read the chapter as Chinese prose only.
-2. Remove translationese and awkward carryover from Japanese syntax.
-3. Check names, forms of address, tense/aspect interpretation, restored omitted subjects, paragraphing, dialogue punctuation, repeated terms, repeated metaphors, and voice drift.
-4. Update `meta/glossary.csv`, `meta/series_bible.md`, `meta/continuity_notes.md`, and `meta/open_issues.md`.
-5. Create `qa/<chapter>.qa.md` when doing file-based work.
+### 2. Context Pass：先读作品再翻译
+1. 能完整读完就先读完整卷。
+2. 如果太大，至少读：所有标题、每章开头/结尾、关键对话、已有 `meta/`、前后相邻章节。
+3. 建立或更新：角色表、称呼表、关系线、时间线、叙述视角、反复句、笑点/梗、世界观术语、伏笔和不确定点。
+4. 生成 `meta/context_pack.md` 作为本轮翻译上下文包。
 
-### 6. Volume-Level Review
-After the volume is complete:
+### 3. Style Lock：先锁文风
+整卷、长篇或用户要求“精翻/出版级/像翻译家”时，先对第一章或 1500-3000 日文字符建立风格样张：
 
-1. Run a cross-chapter consistency pass.
-2. Compare first appearances and later uses of character names, nicknames, kinship terms, address forms, school/job labels, recurring jokes, recurring emotional metaphors, and world-building terms.
-3. Produce `qa/volume_consistency_report.md`.
-4. Treat open issues as unfinished work unless they are low-risk and explicitly recorded.
+- 翻译一小段。
+- 做一次中文编辑改写。
+- 记录人名、称呼、叙述节奏、禁用表达、角色声音。
+- 把决定写进 `meta/style_guide.zh-CN.md` 和 `meta/glossary.csv`。
 
-## Hard Translation Rules
+### 4. Chapter Translation：逐章翻译
+每章遵循固定顺序：
 
-### Natural Chinese First
-When Japanese and Chinese differ structurally, choose the most natural Chinese expression that preserves the original function. Do not preserve Japanese syntax at the expense of Chinese readability.
+1. 读取本章原文、上一章译文/摘要、`meta/context_pack.md`、glossary、series bible。
+2. 按场景或自然段落分块，给每块固定 ID，如 `ch019-sc03`。不要按随机 token 截断。
+3. 对每块先判断：说话人、对象、情绪方向、关系距离、敬语/称呼、隐含主语、时间顺序、高风险词。
+4. 先出准确初译，再做中文文学编辑。
+5. 合并时严格按原块顺序，不移动段落，不把下一章内容插入本章。
+6. 完成中文-only 通读，修掉翻译腔、断裂感、重复套话、不自然句，以及“可是/不过/即便如此/就在这时/那一瞬间”等连接词密度过高的问题。
+7. 做双语完整性抽查：标题、段落、对话、场景转折、作者后记/短信/系统提示不能丢。
+8. 保存：`translations/<chapter>.zh-CN.md` 与 `qa/<chapter>.qa.md`。
+9. 更新 `meta/`。
 
-Allowed transformations include reordering, splitting, merging, replacing an idiom with a Chinese equivalent, and lightly embedding necessary cultural context. These are allowed only when they preserve facts, ambiguity, tone, and scene function.
+### 5. Volume QA：整卷校对
+整卷翻完后必须做：
 
-### Accuracy Before Polish
-- Do not add information, motivations, scene details, foreshadowing, or emotional intensity not present in the source.
-- Do not delete small jokes, hesitations, relationship cues, or ambiguity because they are inconvenient.
-- Do not resolve delayed reveals or unreliable narration early.
-- Do not over-literarize simple Syosetu prose.
+- `python scripts/ln_project.py scan translations --output qa/high_risk_scan.md`
+- `python scripts/ln_project.py manifest --source source --translations translations --output qa/translation_manifest.md`
+- 跨章节检查：人名、称呼、术语、口头禅、反复句、关系线、伏笔、情绪母题、章节顺序。
+- 输出 `qa/volume_consistency_report.md`。
 
-### Honorifics and Address Forms
-Honorifics are not ornaments. Convert them into Chinese social meaning: distance, politeness, respect, intimacy, hierarchy, and emotional shift.
+有严重漏译、错译、章节拼接错乱、高风险 GPT 腔命中未处理时，不要声称完成。
 
-Do not mechanically keep or delete every suffix. Record stable address decisions in `meta/glossary.csv` or `meta/series_bible.md`.
+## 单章/片段工作流
+用户只给单章或片段时：
 
-### Onomatopoeia and Mimetics
-- If there is a natural Chinese sound-symbolic equivalent, use it.
-- If not, translate the effect, motion, mood, texture, or rhythm.
-- Never keep a Japanese mimetic merely because it looks vivid in the source.
-- Do not force a rare or childish Chinese sound word when action description reads better.
+1. 先读取已有 `meta/`；有相邻章节就读相邻章节摘要/结尾。
+2. 没有上下文时，明确在 QA 里记录“不确定的称呼/关系/伏笔”。
+3. 短片段也要先判断人物关系和语气功能，再翻译。
+4. 用户要求“只要译文”时，最终只输出译文；内部仍做检查。
 
-### Puns and Humor
-Use this priority order: preserve plot function, preserve character reaction and comedic timing, preserve humorous effect, then preserve formal verbal mechanism if possible.
+## 翻译原则
 
-If full preservation is impossible, prefer creative Chinese rewriting over dead literalism. Add a note only when the wordplay itself is necessary and cannot be carried in the text.
+### 自然中文优先
+允许为了中文自然而重排、拆分、合并、改成中文等效表达、轻量嵌入必要文化信息。前提是事实、暧昧、伏笔和语气功能不被改写。
 
-### Culture-Loaded Items
-Use a three-step decision:
+### 准确先于润色
+不要添加原文没有的动机、景物、心理强度、解释或伏笔。不要因为中文顺而删掉轻微笑点、停顿、尴尬、沉默、话没说完的感觉。
 
-1. Is the term already readable for zh-CN light-novel readers?
-2. If not, does misunderstanding damage the scene?
-3. If yes, add very light in-line clarification.
+### 敬语与称呼
+日语后缀不是装饰，要转换成中文里的亲疏、礼貌、上下级、年龄差和情绪变化。不要一律保留或一律删除。称呼变化要记录。
 
-Avoid heavy notes unless the user explicitly wants annotation mode.
+### 拟声拟态词
+有自然汉语拟声词就用；没有就转成动作、状态、触感、节奏。不要硬保留日文拟态词，也不要一律删掉。
 
-### High-Risk Calques
-Do not let the following appear as lazy direct translations unless the scene truly demands them:
+### 双关、吐槽、笑点
+优先级：剧情功能 > 人物反应 > 喜剧时机 > 字面结构。能用中文重写就重写；除非用户要求注释版，否则避免长译注。
 
-- `社会人`
-- `元气`
-- `违和感`
-- `接住` for abstract `受け止める`
-- `重要的事物`
-- `心情复杂地`
-- `温柔地笑了起来` when a simpler Chinese verb is more natural
-- `说不定`
-- `果然如此`
 
-For high-risk term handling, read `references/default-glossary.md` and apply context-specific choices instead of fixed one-to-one replacements.
+## 连接词与转折词控制
+翻译和润色时必须查阅 `references/connective-rhythm.md`。日文常用显性连接来推进句子，但中文小说不应把每个 `でも / だけど / しかし / それでも / その時 / 次の瞬間` 都译成“可是/不过/但是/即便如此/就在这时/那一瞬间”。
 
-## Modes
-- `quick`: short excerpt or rough comprehension only.
-- `normal`: analyze context, translate, update memory, and self-check.
-- `refined`: draft, critique, revise, Chinese-only readthrough, continuity check, and QA notes. Use for public release, full chapters, or when the user says 精翻, 顶级质量, 出版级, 完美, or 汉化.
+硬规则：
 
-If the user does not specify a mode, use `refined` for fiction longer than 1,500 Japanese characters and `normal` for shorter narrative text.
+- 不要让相邻段落连续以“可是/不过/但是/即便如此/就在这时/那一瞬间”开头。
+- 同一章内同一个强连接词反复出现时，优先删掉、改成动作承接，或把逻辑压进“还是/仍然/却/只/偏偏”等更轻的中文结构。
+- “即便如此/尽管如此”只用于确有强让步或庄重叙述的场景；普通承接用“还是/仍旧/却”或直接重写。
+- “就在这时”只用于真正有打断感的新事件；普通动作接续直接写动作。
+- “那一瞬间/一瞬间”不要机械对应日文 `瞬間`；常可直接写“我反射性地……”。
+- 原文刻意重复可以保留，但必须在章 QA 里说明它是节奏选择。
 
-## Quality Gates
-Use MQM-style review for literary translation. A chapter is not ready if it has unresolved critical or major errors in accuracy, fluency, character voice/register, terminology/continuity, humor/cultural transfer, or rhythm/readability.
+## 反 GPT 腔硬规则
+翻译和编辑时必须查阅 `references/anti-gptese.md`。以下表达默认视为高风险，除非上下文强烈需要，否则要改写：
 
-For release QA, target:
+- 社会人
+- 抽象义“接住”
+- 元气
+- 违和感
+- 重要的事物
+- 心情复杂地
+- 果然如此
+- 说不定
+- 全部都由我……
+- 身体擅自想起来
+- 鲜明地重放
+- 悲痛喊声
+- 距离感（用于人物关系时）
+- 冰冷的视线落下来（重复使用时）
+- 不是自己的东西一样……
 
-- name/place consistency: 100%
-- glossary consistency: at least 98%, allowing documented context-variable entries
-- high-risk banned calque hits: 0
-- major address-form drift: 0
-- major relationship-line conflicts: 0
-- Chinese punctuation and dialogue quote issues: near zero
+处理方式不是简单替换，而是按场景功能改写。例：
 
-Automatic scores, if available, are alarms rather than final judgment. Human-style MQM review and Chinese-only readthrough decide literary quality.
+- `社会人の嗜み` 在“随身带换洗衣物”的场景里，可译为“这点准备，成年人还是该有的”或“上班族嘛，这点自我管理还是要有的”。不要写“社会人的素养”。
+- 抽象 `受け止める` 在安慰/承诺场景里，可译为“我会听着”“我陪你一起扛”“我受得住”“你说什么我都认真听”。不要写“全部由我接住”。
 
-## Learning From Each Translation
-When the user corrects a translation or a recurring problem appears:
+## 输出约定
+普通对话请求：优先输出 polished 中文译文。若不是“只要译文”，附简短 QA：新术语、未决问题、高风险词处理。
 
-- add term decisions to `meta/glossary.csv` or `references/default-glossary.md`
-- add voice decisions to `meta/series_bible.md`
-- add style/process corrections to `meta/style_guide.zh-CN.md` or this skill when broadly reusable
-- add unresolved choices to `meta/open_issues.md`
-
-Keep updates operational. Do not add general advice that does not change future behavior.
-
-## Output Contract
-For ordinary requests, output the polished Chinese translation first.
-
-For file-based work, save outputs when feasible:
+文件型任务：写入项目目录：
 
 - `translations/<chapter>.zh-CN.md`
 - `qa/<chapter>.qa.md`
-- updated `meta/` assets
+- updated `meta/*.md/csv`
 
-Unless the user asks for translation only, include a short status note listing new glossary entries, unresolved ambiguities, and high-risk continuity issues. If the user asks for only the translation, output only the final polished translation.
+QA 报告要具体，不要空泛夸奖。至少包括：准确性风险、称呼/术语变化、反 GPT 腔扫描、连续性备注。
 
-## Stop Conditions
-Stop once the requested translation, revision, setup, or QA pass is complete and validation has enough evidence. Do not expand into unrelated tooling or rewrite the skill again unless requested.
+## 参考文件
+必要时读取：
+
+- `references/batch-workflow.md`：整卷/文件夹执行细节。
+- `references/anti-gptese.md`：反翻译腔与示例改写。
+- `references/connective-rhythm.md`：连接词、转折词、段落节奏消重。
+- `references/default-glossary.md`：高风险词与默认术语。
+- `references/voice-and-style.md`：角色声音与中文文风。
+- `references/quality-rubric.md`：质量标准与出厂门槛。
+- `references/refinement-prompts.md`：专项审校提示。
+- `references/memory-template.md`、`references/style-guide-template.md`、`references/glossary-template.csv`：项目资产模板。
+
+## 停止条件
+完成用户要求的翻译、修订、QA 或项目初始化后停止。不要把过程长篇输出给用户，除非用户要求看分析。

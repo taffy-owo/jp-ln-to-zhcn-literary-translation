@@ -1,45 +1,34 @@
-# 日文轻小说整卷翻译工作流
+# 整卷翻译工作流
 
-使用技能：`jp-ln-to-zhcn-literary-translation`
+## 输入
+- `source/`：日文原文文件，按章节命名。
+- 可选：已有 `meta/`、前卷译文、术语表。
 
-## 输入约定
-- 源文件目录：`./source/`
-- 中文输出目录：`./translations/`
-- 元数据目录：`./meta/`
-- QA 目录：`./qa/`
+## 输出
+- `translations/<chapter>.zh-CN.md`
+- `qa/<chapter>.qa.md`
+- `qa/high_risk_scan.md`
+- `qa/translation_manifest.md`
+- `qa/volume_consistency_report.md`
+- updated `meta/`
 
-## 目标
-把 `./source/` 下按顺序排列的整卷日文轻小说翻译为高质量简体中文，并同步维护术语、风格、连续性资产。
+## 执行
+```bash
+python scripts/ln_project.py init --root . --source source
+python scripts/ln_project.py inventory --source source --output meta/source_inventory.json
+python scripts/ln_project.py context-pack --source source --meta meta --output meta/context_pack.md
+```
 
-## 执行步骤
+1. 读取 `meta/context_pack.md`、`meta/style_guide.zh-CN.md`、`meta/glossary.csv`。
+2. 建立第一章或首段 style lock。
+3. 每章按场景切分，翻译、编辑、中文-only 通读、双语完整性检查。
+4. 写入译文和 QA。
+5. 更新 `meta/`。
+6. 全卷完成后运行：
 
-### 准备阶段
-- 扫描并排序 source 文件。
-- 读取已有 meta 文件。
-- 若缺失则创建 `series_bible.md`、`style_guide.zh-CN.md`、`glossary.csv`、`continuity_notes.md`、`open_issues.md`。
+```bash
+python scripts/ln_project.py scan translations --output qa/high_risk_scan.md
+python scripts/ln_project.py manifest --source source --translations translations --output qa/translation_manifest.md
+```
 
-### 通读阶段
-- 先通读整卷或尽可能多的章节。
-- 生成全卷概要、角色关系表、叙事视角说明、初始 style guide、初始 glossary。
-
-### 翻译阶段
-对每一章重复以下步骤：
-1. 读取前章摘要与本章原文。
-2. 按场景切块。
-3. 完成初译。
-4. 完成文学化润色。
-5. 全章中文通读。
-6. 更新 glossary / continuity notes / open issues。
-7. 写入 `translations/<chapter>.zh-CN.md` 与 `qa/<chapter>.qa.md`。
-
-### 全卷审核阶段
-- 运行跨章节 consistency review。
-- 检查术语漂移、称呼漂移、人设漂移、笑点丢失、翻译腔复发。
-- 输出 `qa/volume_consistency_report.md`。
-
-## 结束条件
-只有满足以下条件才算完成：
-- 全章均有中文稿。
-- glossary 与 style guide 已更新。
-- volume consistency report 已生成。
-- open issues 只剩低风险项，或均已明确记录。
+7. 人工/模型复核跨章一致性，写 `qa/volume_consistency_report.md`。
