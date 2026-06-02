@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Utilities for Japanese light novel -> zh-CN translation projects.
 
 This script prepares project memory files, inventories source chapters, chunks text
@@ -419,6 +419,245 @@ def cmd_manifest(args: argparse.Namespace) -> int:
     return 0
 
 
+def count_paragraphs(text: str) -> int:
+    """Count non-empty paragraphs separated by blank lines."""
+    return len([p for p in re.split(r"\n\s*\n", text.strip()) if p.strip()])
+
+
+def count_dialogue_lines(text: str) -> int:
+    """Count lines that contain dialogue markers (Japanese or Chinese quotes)."""
+    count = 0
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(("\u300c", "\u300e", "\u201c", "\uff62")):
+            count += 1
+    return count
+
+
+def extract_headings(text: str) -> list[str]:
+    """Extract markdown headings."""
+    headings: list[str] = []
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("#"):
+            headings.append(stripped.lstrip("#").strip())
+    return headings
+
+
+def find_duplicate_paragraphs(text: str, min_len: int = 30) -> list[str]:
+    """Find paragraphs that appear more than once (likely copy-paste errors)."""
+    paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text.strip()) if p.strip()]
+    seen: dict[str, int] = {}
+    duplicates: list[str] = []
+    for p in paragraphs:
+        if len(p) >= min_len:
+            if p in seen:
+                if seen[p] == 1:
+                    duplicates.append(p[:100] + ("..." if len(p) > 100 else ""))
+            seen[p] = seen.get(p, 0) + 1
+    return duplicates
+
+
+def cmd_stitch_check(args: argparse.Namespace) -> int:
+    src_dir = Path(args.source)
+    trans_dir = Path(args.translations)
+    src_items = inventory(src_dir)
+    lines = [
+        "# Stitch Check Report", "",
+        "This report compares source and translation files for structural integrity.", "",
+    ]
+    issues: list[dict[str, str]] = []
+
+    for item in src_items:
+        trans_path = None
+        for cand in translation_candidates(item.rel):
+            p = trans_dir / cand
+            if p.exists():
+                trans_path = p
+                break
+        if not trans_path:
+            issues.append({"file": item.rel, "type": "missing", "detail": "Translation file not found"})
+            continue
+
+        src_text = read_text(item.path)
+        trans_text = read_text(trans_path)
+
+        # Paragraph count comparison
+        src_paras = count_paragraphs(src_text)
+        trans_paras = count_paragraphs(trans_text)
+        if src_paras > 0:
+            ratio = trans_paras / src_paras
+            if ratio < 0.7 or ratio > 1.5:
+                issues.append({
+                    "file": item.rel,
+                    "type": "paragraph_mismatch",
+                    "detail": f"Source: {src_paras} paragraphs, Translation: {trans_paras} paragraphs (ratio: {ratio:.2f})",
+                })
+
+        # Dialogue line count comparison
+        src_dlg = count_dialogue_lines(src_text)
+        trans_dlg = count_dialogue_lines(trans_text)
+        if src_dlg > 0:
+            dlg_ratio = trans_dlg / src_dlg
+            if dlg_ratio < 0.7 or dlg_ratio > 1.5:
+                issues.append({
+                    "file": item.rel,
+                    "type": "dialogue_mismatch",
+                    "detail": f"Source: {src_dlg} dialogue lines, Translation: {trans_dlg} dialogue lines (ratio: {dlg_ratio:.2f})",
+                })
+
+        # Heading check
+        src_headings = extract_headings(src_text)
+        trans_headings = extract_headings(trans_text)
+        if src_headings and not trans_headings:
+            issues.append({
+                "file": item.rel,
+                "type": "missing_heading",
+                "detail": f"Source has {len(src_headings)} heading(s) but translation has none",
+            })
+
+        # Duplicate paragraph check
+        dups = find_duplicate_paragraphs(trans_text)
+        for dup in dups:
+            issues.append({
+                "file": item.rel,
+                "type": "duplicate_paragraph",
+                "detail": f"Duplicate paragraph: {dup}",
+            })
+
+    # Write report
+    lines.append(f"Checked files: {len(src_items)}")
+    lines.append(f"Issues found: {len(issues)}")
+    lines.append("")
+    if issues:
+        lines.append("| Source file | Issue type | Detail |")
+        lines.append("|---|---|---|")
+        for issue in issues:
+            detail = issue["detail"].replace("|", "\\|")
+            lines.append(f"| {issue['file']} | {issue['type']} | {detail} |")
+    else:
+        lines.append("No structural issues detected. This is not a substitute for human review.")
+
+    out = Path(args.output)
+    write_text(out, "\n".join(lines) + "\n")
+    print(f"wrote stitch-check report with {len(issues)} issues to {out}")
+    return 0
+
+
+def cmd_glossary_audit(args: argparse.Namespace) -> int:
+    glossary_path = Path(args.glossary)
+    trans_dir = Path(args.translations)
+
+    if not glossary_path.exists():
+        print(f"glossary not found: {glossary_path}")
+        return 1
+
+    # Parse glossary
+    deprecated_terms: list[dict[str, str]] = []
+    forbidden_terms: list[dict[str, str]] = []
+
+    with glossary_path.open(encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            status = row.get("status", "").strip().lower()
+            source = row.get("source", "").strip()
+            banned = row.get("banned_variants", "").strip()
+            deprecated_form = row.get("deprecated_form", "").strip()
+
+            if status == "deprecated" and source:
+                deprecated_terms.append(row)
+            elif status == "forbidden" and source:
+                forbidden_terms.append(row)
+
+            # Collect all banned variants for scanning
+            if banned:
+                for bv in banned.split("|"):
+                    bv = bv.strip()
+                    if bv:
+                        forbidden_terms.append({"source": source, "banned_variant": bv, "status": "banned_variant"})
+
+            if deprecated_form:
+                for df in deprecated_form.split("|"):
+                    df = df.strip()
+                    if df:
+                        deprecated_terms.append({"source": source, "deprecated_form": df, "status": "deprecated_form"})
+
+    # Scan translation files
+    trans_files = [p for p in trans_dir.rglob("*") if p.is_file() and p.suffix.lower() in TEXT_EXTS]
+    findings: list[dict[str, str]] = []
+
+    for fp in sorted(trans_files, key=lambda p: natural_key(str(p))):
+        text = read_text(fp)
+        rel = display_path(str(fp), start=os.getcwd())
+
+        # Check for banned variants
+        for term in forbidden_terms:
+            search_term = term.get("banned_variant", term.get("source", ""))
+            if not search_term:
+                continue
+            for line_no, line in enumerate(text.splitlines(), 1):
+                if search_term in line:
+                    findings.append({
+                        "file": rel,
+                        "line": str(line_no),
+                        "type": "banned_variant",
+                        "term": search_term,
+                        "source": term.get("source", ""),
+                        "snippet": line_snippet(line, search_term),
+                    })
+
+        # Check for deprecated forms
+        for term in deprecated_terms:
+            search_term = term.get("deprecated_form", term.get("source", ""))
+            if not search_term:
+                continue
+            for line_no, line in enumerate(text.splitlines(), 1):
+                if search_term in line:
+                    findings.append({
+                        "file": rel,
+                        "line": str(line_no),
+                        "type": "deprecated_term",
+                        "term": search_term,
+                        "source": term.get("source", ""),
+                        "snippet": line_snippet(line, search_term),
+                    })
+
+    # Write report
+    lines = [
+        "# Glossary Audit Report", "",
+        f"Glossary: {glossary_path}",
+        f"Scanned files: {len(trans_files)}",
+        f"Deprecated/banned terms in glossary: {len(deprecated_terms) + len(forbidden_terms)}",
+        f"Findings: {len(findings)}",
+        "",
+    ]
+    if findings:
+        lines.append("| File | Line | Type | Term | Source | Snippet |")
+        lines.append("|---|---:|---|---|---|---|")
+        for f in findings:
+            snippet = f["snippet"].replace("|", "\\|")
+            lines.append(f"| {f['file']} | {f['line']} | {f['type']} | {f['term']} | {f['source']} | {snippet} |")
+    else:
+        lines.append("No deprecated or banned terms found in translations. Glossary is clean.")
+
+    lines += ["", "## Glossary Health Summary", ""]
+    status_counts: dict[str, int] = {}
+    with glossary_path.open(encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            s = row.get("status", "unknown").strip().lower()
+            status_counts[s] = status_counts.get(s, 0) + 1
+    lines.append("| Status | Count |")
+    lines.append("|---|---:|")
+    for status, count in sorted(status_counts.items()):
+        lines.append(f"| {status} | {count} |")
+
+    out = Path(args.output)
+    write_text(out, "\n".join(lines) + "\n")
+    print(f"wrote glossary audit with {len(findings)} findings to {out}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Japanese light novel zh-CN translation project utilities")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -455,6 +694,19 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--translations", default="translations")
     s.add_argument("--output", default="qa/translation_manifest.md")
     s.set_defaults(func=cmd_manifest)
+
+    s = sub.add_parser("stitch-check", help="check structural integrity of translations vs source")
+    s.add_argument("--source", default="source")
+    s.add_argument("--translations", default="translations")
+    s.add_argument("--output", default="qa/stitch_report.md")
+    s.set_defaults(func=cmd_stitch_check)
+
+    s = sub.add_parser("glossary-audit", help="audit translations against glossary deprecated/banned terms")
+    s.add_argument("--glossary", default="meta/glossary.csv")
+    s.add_argument("--translations", default="translations")
+    s.add_argument("--output", default="qa/glossary_audit.md")
+    s.set_defaults(func=cmd_glossary_audit)
+
     return p
 
 

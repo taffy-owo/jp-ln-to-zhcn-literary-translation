@@ -90,15 +90,54 @@ project/
 ## Names and Addresses
 
 ## Glossary Drift
+| Term | Expected | Found | Chapter | Fix |
+|---|---|---|---|---|
 
 ## Character Voice Drift
+| Character | Issue | Chapter | Severity | Fix |
+|---|---|---|---|---|
 
 ## Relationship and Timeline
 
 ## High-Risk Translationese Scan
 
 ## Connective / Rhythm Overuse
+| Chapter | Issue | Count | Status |
+|---|---|---|---|
+
+## Golden Set Regression (if applicable)
+| Sample | Verdict | Notes |
+|---|---|---|
 
 ## Final Release Decision
 ready / needs focused repair / needs retranslation
+```
+
+## 发布前 Checklist
+
+整卷翻译完成、QA 通过后，发布前必须逐项确认：
+
+```md
+# Release Checklist - [卷名]
+
+## 硬性条件（全部通过才能发布）
+- [ ] Critical 问题归零
+- [ ] 术语锁定：glossary 中所有 `approved` 状态术语在译文中一致
+- [ ] 声线稳定：主要角色声线卡检查通过，无 major 级漂移
+- [ ] 漏段归零：translation manifest 显示所有章节 status=ok
+- [ ] 未翻译日文残留归零
+- [ ] 亲密/成人场景忠实呈现：无遮掩、无删节、无委婉替换
+- [ ] Volume Consistency Report 已产出
+
+## 质量条件（尽量通过）
+- [ ] 连接词密度扫描通过或已人工审校
+- [ ] Golden set 回归无退化（如适用）
+- [ ] Open issues 全部已决策或标注为"已知权衡"
+- [ ] 每章 QA 质量卡已输出
+
+## 交付物
+- [ ] `translations/*.zh-CN.md` 全部就绪
+- [ ] `qa/volume_consistency_report.md` 已产出
+- [ ] `meta/` 已更新（glossary、continuity_notes、series_bible）
+- [ ] EPUB/最终格式已编译（如适用）
 ```
